@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KEAP Homes — Content Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E8C96A;
+      --gold-dark: #8B6914;
+      --black: #0A0A0A;
+      --surface: #111111;
+      --surface2: #1A1A1A;
+      --surface3: #222222;
+      --border: rgba(201,168,76,0.15);
+      --border-bright: rgba(201,168,76,0.4);
+      --text: #E8E4DC;
+      --text-muted: #888880;
+      --fb: #1877F2;
+      --ig: #C13584;
+      --tt: #E8E8E8;
+      --lend: #7C3AED;
+      --edu: #059669;
+      --bts: #D97706;
+      --market: #0891B2;
+      --mind: #DC2626;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Gold line top */
+    .topbar {
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent);
+    }
+
+    header {
+      padding: 32px 32px 24px;
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-k {
+      width: 52px;
+      height: 52px;
+      background: var(--gold);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 30px;
+      color: var(--black);
+      flex-shrink: 0;
+    }
+
+    .logo-text h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .logo-text p {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .tagline {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 320px;
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
+
+    /* Generate button */
+    .generate-wrap {
+      margin-bottom: 40px;
+    }
+
+    .btn-generate {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 40px;
+      background: var(--gold);
+      border: none;
+      border-radius: 8px;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-generate:hover:not(:disabled) {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-generate:disabled {
+      background: var(--surface3);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-regen {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--border-bright);
+      border-radius: 6px;
+      color: var(--gold);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: 16px;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .btn-regen:hover:not(:disabled) {
+      background: rgba(201,168,76,0.08);
+    }
+
+    .btn-regen:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(0,0,0,0.3);
+      border-top-color: var(--black);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .spinner-muted {
+      border-color: rgba(255,255,255,0.1);
+      border-top-color: var(--text-muted);
+    }
+
+    /* Error */
+    .error-box {
+      background: #1a0808;
+      border: 1px solid #5a1a1a;
+      border-radius: 8px;
+      padding: 16px 20px;
+      color: #ff8888;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: flex;
+      gap: 32px;
+      padding: 20px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .stat { text-align: center; }
+    .stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Day tabs */
+    .day-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .day-tab {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--surface3);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .day-tab:hover { border-color: var(--border-bright); color: var(--text); }
+
+    .day-tab.active {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.1);
+      color: var(--gold);
+    }
+
+    .day-tab .post-count {
+      display: block;
+      font-size: 9px;
+      margin-top: 2px;
+      opacity: 0.7;
+    }
+
+    /* Day heading */
+    .day-heading {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    /* Post cards */
+    .posts-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .post-card {
+      background: var(--surface);
+      border: 1px solid var(--surface3);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .post-card.open { border-color: rgba(201,168,76,0.3); }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .post-header:hover { background: rgba(255,255,255,0.02); }
+
+    .platform-badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+      min-width: 82px;
+      text-align: center;
+    }
+
+    .type-badge {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .post-hook {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-style: italic;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chevron {
+      color: var(--text-muted);
+      font-size: 12px;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .post-card.open .chevron { transform: rotate(180deg); }
+
+    .post-body {
+      border-top: 1px solid var(--surface3);
+      padding: 20px;
+    }
+
+    .post-text {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+      white-space: pre-wrap;
+      margin-bottom: 14px;
+    }
+
+    .hashtags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .hashtag {
+      background: rgba(55,138,221,0.1);
+      color: #7eb8f7;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .visual-note {
+      background: rgba(201,168,76,0.06);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #ccaa44;
+      margin-bottom: 14px;
+    }
+
+    .visual-note strong { color: var(--gold); }
+
+    .post-actions { display: flex; gap: 10px; }
+
+    .btn-copy {
+      padding: 9px 18px;
+      background: var(--surface3);
+      border: 1px solid var(--surface3);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .btn-copy:hover { border-color: var(--border-bright); color: var(--text); }
+    .btn-copy.copied {
+      background: rgba(5,150,105,0.15);
+      border-color: #059669;
+      color: #34d399;
+    }
+
+    /* Loading state */
+    .loading-state {
+      padding: 60px 0;
+      text-align: center;
+    }
+
+    .loading-label {
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .loading-platforms {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+    .platform-pill {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .p-fb { background: rgba(24,119,242,0.15); color: var(--fb); animation: pulse 1.5s ease-in-out infinite; }
+    .p-ig { background: rgba(193,53,132,0.15); color: var(--ig); animation: pulse 1.5s ease-in-out 0.3s infinite; }
+    .p-tt { background: rgba(232,232,232,0.1); color: var(--tt); animation: pulse 1.5s ease-in-out 0.6s infinite; }
+
+    /* Platform badge colors */
+    .badge-fb { background: var(--fb); color: #fff; }
+    .badge-ig { background: var(--ig); color: #fff; }
+    .badge-tt { background: #111; color: var(--tt); border: 1px solid #444; }
+
+    /* Type badge colors */
+    .tbadge-lend { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .tbadge-edu  { background: rgba(5,150,105,0.15);  color: #34d399; }
+    .tbadge-bts  { background: rgba(217,119,6,0.15);  color: #fbbf24; }
+    .tbadge-mkt  { background: rgba(8,145,178,0.15);  color: #67e8f9; }
+    .tbadge-mind { background: rgba(220,38,38,0.15);  color: #fca5a5; }
+
+    footer {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 32px 32px;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    footer p { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; }
+
+    @media (max-width: 600px) {
+      header { flex-direction: column; }
+      .tagline { text-align: left; max-width: 100%; }
+      main, footer { padding-left: 16px; padding-right: 16px; }
+      .stats-row { gap: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar"></div>
+
+<header>
+  <div class="logo-block">
+    <div class="logo-k">K</div>
+    <div class="logo-text">
+      <h1>KEAP HOMES</h1>
+      <p>Social Content Engine</p>
+    </div>
+  </div>
+  <p class="tagline">One click. 7 days of real estate content across Facebook, Instagram &amp; TikTok.</p>
+</header>
+
+<main>
+
+  <div class="generate-wrap">
+    <button class="btn-generate" id="btn-main" onclick="generate()">
+      <span id="btn-icon">⚡</span>
+      <span id="btn-label">Generate This Week's Content</span>
+    </button>
+    <button class="btn-regen" id="btn-regen" onclick="generate()" disabled style="display:none">
+      <span id="regen-icon">↺</span> Regenerate
+    </button>
+  </div>
+
+  <div id="error-box" class="error-box" style="display:none"></div>
+
+  <div id="loading" class="loading-state" style="display:none">
+    <p class="loading-label">Crafting your content...</p>
+    <div class="loading-platforms">
+      <span class="platform-pill p-fb">Facebook</span>
+      <span class="platform-pill p-ig">Instagram</span>
+      <span class="platform-pill p-tt">TikTok</span>
+    </div>
+  </div>
+
+  <div id="content-area" style="display:none">
+    <div class="stats-row" id="stats-row"></div>
+    <div class="day-tabs" id="day-tabs"></div>
+    <div id="day-heading" class="day-heading"></div>
+    <div class="posts-list" id="posts-list"></div>
+  </div>
+
+</main>
+
+<footer>
+  <p>KEAP Homes Inc. · Internal use only</p>
+  <p id="footer-count"></p>
+</footer>
+
+<script>
+let contentData = null;
+let activeDay = 0;
+
+const TYPE_CLASS = {
+  "Private Lending": "tbadge-lend",
+  "Deal Education":  "tbadge-edu",
+  "Behind the Scenes": "tbadge-bts",
+  "Market Insight":  "tbadge-mkt",
+  "Mindset":         "tbadge-mind",
+};
+
+const PLATFORM_CLASS = {
+  "Facebook":  "badge-fb",
+  "Instagram": "badge-ig",
+  "TikTok":    "badge-tt",
+};
+
+const DAY_SHORT = {
+  Monday:"MON", Tuesday:"TUE", Wednesday:"WED",
+  Thursday:"THU", Friday:"FRI", Saturday:"SAT", Sunday:"SUN"
+};
+
+async function generate() {
+  setLoading(true);
+  hideError();
+
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: "Generate a full week of social media content for KEAP Homes." }),
+    });
+
+    if (!res.ok) throw new Error("Server error " + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    contentData = data;
+    activeDay = 0;
+    renderContent();
+  } catch (e) {
+    showError(e.message || "Generation failed. Try again.");
+  } finally {
+    setLoading(false);
+  }
+}
+
+function setLoading(on) {
+  document.getElementById("loading").style.display = on ? "block" : "none";
+  document.getElementById("btn-main").disabled = on;
+  document.getElementById("btn-regen").disabled = on;
+  const icon = document.getElementById("btn-icon");
+  const label = document.getElementById("btn-label");
+  const regenIcon = document.getElementById("regen-icon");
+  if (on) {
+    icon.innerHTML = '<div class="spinner"></div>';
+    label.textContent = "Generating...";
+    regenIcon.innerHTML = '<div class="spinner spinner-muted" style="width:14px;height:14px"></div>';
+  } else {
+    icon.textContent = "⚡";
+    label.textContent = "Generate This Week's Content";
+    regenIcon.textContent = "↺";
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById("error-box");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+function hideError() {
+  document.getElementById("error-box").style.display = "none";
+}
+
+function renderContent() {
+  const weeks = contentData.week || [];
+  const totalPosts = weeks.reduce((s, d) => s + d.posts.length, 0);
+  const lendPosts = weeks.reduce((s, d) => s + d.posts.filter(p => p.type === "Private Lending").length, 0);
+
+  // Stats
+  document.getElementById("stats-row").innerHTML = `
+    <div class="stat"><div class="stat-num">${weeks.length}</div><div class="stat-label">Days</div></div>
+    <div class="stat"><div class="stat-num">${totalPosts}</div><div class="stat-label">Total Posts</div></div>
+    <div class="stat"><div class="stat-num">${lendPosts}</div><div class="stat-label">Lending Posts</div></div>
+  `;
+  document.getElementById("footer-count").textContent = totalPosts + " posts ready";
+
+  // Tabs
+  const tabsEl = document.getElementById("day-tabs");
+  tabsEl.innerHTML = weeks.map((day, i) => `
+    <button class="day-tab${i === activeDay ? " active" : ""}" onclick="switchDay(${i})">
+      ${DAY_SHORT[day.day] || day.day}
+      <span class="post-count">${day.posts.length} posts</span>
+    </button>
+  `).join("");
+
+  renderDay();
+
+  document.getElementById("content-area").style.display = "block";
+  document.getElementById("btn-regen").style.display = "inline-flex";
+}
+
+function switchDay(i) {
+  activeDay = i;
+  document.querySelectorAll(".day-tab").forEach((t, j) => {
+    t.classList.toggle("active", j === i);
+  });
+  renderDay();
+}
+
+function renderDay() {
+  const day = contentData.week[activeDay];
+  document.getElementById("day-heading").textContent = day.day.toUpperCase();
+
+  const listEl = document.getElementById("posts-list");
+  listEl.innerHTML = day.posts.map((post, idx) => {
+    const pClass = PLATFORM_CLASS[post.platform] || "badge-fb";
+    const tClass = TYPE_CLASS[post.type] || "tbadge-edu";
+    const tags = (post.hashtags || []).map(h => `<span class="hashtag">#${h}</span>`).join("");
+    const id = `post-${activeDay}-${idx}`;
+    return `
+      <div class="post-card" id="${id}">
+        <div class="post-header" onclick="togglePost('${id}')">
+          <span class="platform-badge ${pClass}">${post.platform}</span>
+          <span class="type-badge ${tClass}">${post.type}</span>
+          <span class="post-hook">"${post.hook}"</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="post-body" style="display:none">
+          <div class="post-text">${escHtml(post.body)}</div>
+          ${tags ? `<div class="hashtags">${tags}</div>` : ""}
+          ${post.visualNote ? `<div class="visual-note"><strong>📸 Visual:</strong> ${escHtml(post.visualNote)}</div>` : ""}
+          <div class="post-actions">
+            <button class="btn-copy" id="copy-${id}" onclick="copyPost('${id}', event)">Copy post</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function togglePost(id) {
+  const card = document.getElementById(id);
+  const body = card.querySelector(".post-body");
+  const isOpen = card.classList.contains("open");
+  card.classList.toggle("open", !isOpen);
+  body.style.display = isOpen ? "none" : "block";
+}
+
+function copyPost(id, e) {
+  e.stopPropagation();
+  const card = document.getElementById(id);
+  const text = card.querySelector(".post-text").textContent;
+  const tags = [...card.querySelectorAll(".hashtag")].map(t => t.textContent).join(" ");
+  navigator.clipboard.writeText(text + (tags ? "\n\n" + tags : ""));
+  const btn = document.getElementById("copy-" + id);
+  btn.textContent = "✓ Copied!";
+  btn.classList.add("copied");
+  setTimeout(() => {
+    btn.textContent = "Copy post";
+    btn.classList.remove("copied");
+  }, 2000);
+}
+
+function escHtml(str) {
+  return (str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+
+</body>
+</html>
