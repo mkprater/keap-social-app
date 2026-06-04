@@ -1,3 +1,5 @@
+const https = require("https");
+
 exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
@@ -15,82 +17,49 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: JSON.stringify({ error: "Invalid request body" }) };
   }
 
-  const SYSTEM_PROMPT = `You are a real estate marketing expert creating social media content for KEAP Homes Inc., a fix-and-flip real estate investment company in the Salt Lake City / Utah area run by Kevin Prater.
+  const SYSTEM_PROMPT = `You are a real estate marketing expert creating social media content for KEAP Homes Inc., a fix-and-flip real estate investment company in the Salt Lake City / Utah area run by Kevin Prater. Brand voice: Direct, confident, authentic, entrepreneurial. No fluff. Every post MUST end with exactly: "If you know someone interested in lending, let's talk." At least ONE post per day must be Private Lending type. Platforms: Facebook, Instagram, TikTok. No generic agent content. Be real. Utah-specific when relevant. Respond ONLY with a valid JSON object (no markdown, no backticks): {"week":[{"day":"Monday","posts":[{"platform":"Facebook","type":"Private Lending","hook":"First line","body":"Full post text ending with the CTA","hashtags":["tag1"],"visualNote":"What to film or photograph"}]}]}. Generate exactly 7 days, 2-3 posts each day, rotate platforms evenly, at least one Private Lending post per day.`;
 
-Brand voice: Direct, confident, authentic, entrepreneurial. No fluff. Kevin is a real investor doing real deals. He's sharp, values integrity, and has zero tolerance for BS.
+  const payload = JSON.stringify({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 8000,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content: "Generate a full week of social media content for KEAP Homes." }],
+  });
 
-Content pillars:
-1. Fix-and-flip education (ARV, MAO, how deals work)
-2. Behind-the-scenes rehab content (before/after, progress, lessons)
-3. Private lending opportunity (passive returns, secured by real estate)
-4. Local market insights (Utah/SLC area)
-5. Investor mindset / entrepreneurship
-
-CRITICAL RULES:
-- Every single post MUST end with exactly: "If you know someone interested in lending, let's talk."
-- At least ONE post per day must be Private Lending type
-- Platforms: Facebook (conversational, slightly longer), Instagram (punchy, visual hooks, hashtags), TikTok (hook-first script format with clear spoken opening line)
-- No generic real estate agent content. Kevin is an INVESTOR, not an agent.
-- No cringe. Be real.
-- Utah-specific when relevant
-- Mix formats: tips, numbers/data, questions, behind-the-scenes, hot takes
-
-Respond ONLY with a valid JSON object (no markdown, no backticks) with this exact structure:
-{
-  "week": [
-    {
-      "day": "Monday",
-      "posts": [
-        {
-          "platform": "Facebook",
-          "type": "Private Lending",
-          "hook": "First line / attention grabber (1 sentence)",
-          "body": "Full post text including the CTA at the end",
-          "hashtags": ["tag1", "tag2"],
-          "visualNote": "What photo/video to pair with this post (1 sentence)"
-        }
-      ]
-    }
-  ]
-}
-
-Generate exactly 7 days. Each day has 2-3 posts. Rotate platforms so each platform gets roughly equal coverage. At least one Private Lending post per day.`;
-
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+  return new Promise((resolve) => {
+    const options = {
+      hostname: "api.anthropic.com",
+      path: "/v1/messages",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-api-key": ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
+        "Content-Length": Buffer.byteLength(payload),
       },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 8000,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: body.prompt || "Generate a full week of social media content for KEAP Homes.",
-          },
-        ],
-      }),
+    };
+
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => { data += chunk; });
+      res.on("end", () => {
+        try {
+          const parsed = JSON.parse(data);
+          const text = parsed.content?.[0]?.text || "";
+          const clean = text.replace(/```json|```/g, "").trim();
+          const result = JSON.parse(clean);
+          resolve({ statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify(result) });
+        } catch (e) {
+          resolve({ statusCode: 500, body: JSON.stringify({ error: "Parse failed: " + e.message }) });
+        }
+      });
     });
 
-    const data = await response.json();
-    const text = data.content?.[0]?.text || "";
-    const clean = text.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean);
+    req.on("error", (e) => {
+      resolve({ statusCode: 500, body: JSON.stringify({ error: "Request failed: " + e.message }) });
+    });
 
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed),
-    };
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Generation failed: " + err.message }),
-    };
-  }
+    req.write(payload);
+    req.end();
+  });
 };
