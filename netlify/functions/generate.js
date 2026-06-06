@@ -23,6 +23,7 @@ exports.handler = async function (event) {
   const isLendingDay = lendingDays.includes(dayIndex);
 
   const lendingPost = isLendingDay ? `
+  The Private Lending post should be on this platform today: Monday=Facebook, Wednesday=Instagram, Saturday=TikTok.
 ONE of the three posts must be a Private Lending post. This post should:
 - Explain a specific, concrete benefit or mechanic of private lending (not generic)
 - Use real numbers: typical returns 8-12%, loan amounts $50K-$200K, deal timelines 4-8 months
